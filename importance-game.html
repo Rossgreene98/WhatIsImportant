@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Importance Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .instructions {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+
+        .instructions h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .instructions p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .score-display {
+            background: #4caf50;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 6px;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: none;
+        }
+
+        .columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .column {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .column h2 {
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.4em;
+        }
+
+        .column-subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        #claudeColumn {
+            display: none;
+        }
+
+        .comparison-mode #claudeColumn {
+            display: block;
+        }
+
+        .disagreements {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .comparison-mode .disagreements {
+            display: block;
+        }
+
+        .disagreements h2 {
+            color: #856404;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .disagreement-item {
+            background: white;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 15px;
+            align-items: center;
+            border-left: 4px solid #ffc107;
+        }
+
+        .disagreement-item .name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .disagreement-item .rank-label {
+            text-align: center;
+            color: #666;
+            font-size: 0.85em;
+        }
+
+        .disagreement-item .rank-value {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .disagreement-item .diff-value {
+            text-align: center;
+            background: #ffc107;
+            color: #856404;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .item-list {
+            min-height: 400px;
+        }
+
+        .item {
+            background: white;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            cursor: move;
+            border: 2px solid #e0e0e0;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .item.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .item.drag-over {
+            border-top: 3px solid #667eea;
+        }
+
+        .item-content {
+            flex: 1;
+        }
+
+        .rank-number {
+            font-weight: bold;
+            color: #667eea;
+            margin-right: 10px;
+            font-size: 1.1em;
+        }
+
+        .rank-input {
+            width: 45px;
+            font-weight: bold;
+            color: #667eea;
+            margin-right: 10px;
+            font-size: 1.1em;
+            border: 2px solid transparent;
+            background: transparent;
+            padding: 2px 4px;
+            border-radius: 4px;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .rank-input:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .rank-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .rank-input.invalid {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+
+        .comparison-mode .rank-input {
+            pointer-events: none;
+        }
+
+        .difference {
+            background: #ff9800;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9em;
+            min-width: 45px;
+            text-align: center;
+        }
+
+        .difference.positive {
+            background: #4caf50;
+        }
+
+        .difference.negative {
+            background: #f44336;
+        }
+
+        .difference.perfect {
+            background: #9c27b0;
+        }
+
+        @media (max-width: 768px) {
+            .columns {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+
+            .disagreement-item {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .disagreement-item .rank-label {
+                display: inline;
+                margin-right: 5px;
+            }
+
+            .disagreement-item .rank-value,
+            .disagreement-item .diff-value {
+                display: inline;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .comparison-mode .item {
+            cursor: default;
+        }
+
+        .comparison-mode .item:hover {
+            border-color: #e0e0e0;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 The Importance Game</h1>
+        <p class="subtitle">How do you rank the importance of things?</p>
+        
+        <div class="instructions">
+            <h2>How to Play</h2>
+            <p><strong>1.</strong> Drag and drop items in the right column to rank them by importance (100 = most important, 0 = least)</p>
+            <p><strong>2.</strong> Click "Compare with Claude" to see how your rankings differ from Claude's</p>
+            <p><strong>3.</strong> Lower scores are better - a perfect score of 0 means you matched Claude exactly!</p>
+        </div>
+
+        <div class="controls">
+            <button id="compareBtn">Compare with Claude</button>
+            <button id="resetBtn">Reset Rankings</button>
+            <button id="shuffleBtn">Shuffle Items</button>
+            <div class="score-display" id="scoreDisplay"></div>
+        </div>
+
+        <div class="disagreements" id="disagreements">
+            <h2>🔥 Your Top 10 Biggest Disagreements with Claude</h2>
+            <div id="disagreementsList"></div>
+        </div>
+
+        <div class="columns">
+            <div class="column">
+                <h2>Your Rankings</h2>
+                <p class="column-subtitle">(Top = Most Important, Bottom = Least Important)</p>
+                <div class="item-list" id="userList"></div>
+            </div>
+            <div class="column" id="claudeColumn">
+                <h2>Claude's Rankings</h2>
+                <div class="item-list" id="claudeList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const items = [
+            { rank: 100, name: "Liquid water" },
+            { rank: 99, name: "Oxygen atmosphere" },
+            { rank: 98, name: "The Sun" },
+            { rank: 97, name: "Photosynthesis" },
+            { rank: 96, name: "DNA/genetic inheritance" },
+            { rank: 95, name: "Plate tectonics" },
+            { rank: 94, name: "Gravity" },
+            { rank: 93, name: "The carbon cycle" },
+            { rank: 92, name: "Oceanic phytoplankton" },
+            { rank: 91, name: "Soil bacteria" },
+            { rank: 90, name: "Pollinators (bees, etc.)" },
+            { rank: 89, name: "Wheat" },
+            { rank: 88, name: "Rice" },
+            { rank: 87, name: "The water cycle" },
+            { rank: 86, name: "Nitrogen fixation" },
+            { rank: 85, name: "Human language" },
+            { rank: 84, name: "Fire/combustion" },
+            { rank: 83, name: "Iron" },
+            { rank: 82, name: "Antibiotics" },
+            { rank: 81, name: "Vaccines" },
+            { rank: 80, name: "Electricity" },
+            { rank: 79, name: "Mathematics" },
+            { rank: 78, name: "Tides" },
+            { rank: 77, name: "Fungi" },
+            { rank: 76, name: "Written language" },
+            { rank: 75, name: "The scientific method" },
+            { rank: 74, name: "Opposable thumbs" },
+            { rank: 73, name: "Fossil fuels" },
+            { rank: 72, name: "Concrete" },
+            { rank: 71, name: "Copper" },
+            { rank: 70, name: "Textiles/clothing" },
+            { rank: 69, name: "Potatoes" },
+            { rank: 68, name: "Internal combustion engines" },
+            { rank: 67, name: "Steel" },
+            { rank: 66, name: "Penicillin" },
+            { rank: 65, name: "Semiconductors" },
+            { rank: 64, name: "Sanitation systems" },
+            { rank: 63, name: "Clean water infrastructure" },
+            { rank: 62, name: "Corn/maize" },
+            { rank: 61, name: "Shipping containers" },
+            { rank: 60, name: "Refrigeration" },
+            { rank: 59, name: "The printing press" },
+            { rank: 58, name: "Soap" },
+            { rank: 57, name: "Glass" },
+            { rank: 56, name: "Rubber" },
+            { rank: 55, name: "Plastics" },
+            { rank: 54, name: "The internet" },
+            { rank: 53, name: "Aluminum" },
+            { rank: 52, name: "Cotton" },
+            { rank: 51, name: "Anesthesia" },
+            { rank: 50, name: "Chickens" },
+            { rank: 49, name: "Paper" },
+            { rank: 48, name: "Cattle" },
+            { rank: 47, name: "Chlorine" },
+            { rank: 46, name: "Aspirin" },
+            { rank: 45, name: "Roads" },
+            { rank: 44, name: "Eyeglasses" },
+            { rank: 43, name: "Bananas" },
+            { rank: 42, name: "Ferrets" },
+            { rank: 41, name: "Tomatoes" },
+            { rank: 40, name: "Limes" },
+            { rank: 39, name: "Transistors" },
+            { rank: 38, name: "GPS" },
+            { rank: 37, name: "Sulfur" },
+            { rank: 36, name: "Mirrors" },
+            { rank: 35, name: "Coffee" },
+            { rank: 34, name: "Bicycles" },
+            { rank: 33, name: "Batteries" },
+            { rank: 32, name: "Trains" },
+            { rank: 31, name: "Wool" },
+            { rank: 30, name: "Chocolate" },
+            { rank: 29, name: "Pigeons" },
+            { rank: 28, name: "Leather" },
+            { rank: 27, name: "Tea" },
+            { rank: 26, name: "Cheese" },
+            { rank: 25, name: "Domestic cats" },
+            { rank: 24, name: "Vinegar" },
+            { rank: 23, name: "Beer" },
+            { rank: 22, name: "Pencils" },
+            { rank: 21, name: "Buttons" },
+            { rank: 20, name: "Windows (literal)" },
+            { rank: 19, name: "Umbrellas" },
+            { rank: 18, name: "Fountain pens" },
+            { rank: 17, name: "Cinnamon" },
+            { rank: 16, name: "Kites" },
+            { rank: 15, name: "Marbles" },
+            { rank: 14, name: "Harmonicas" },
+            { rank: 13, name: "Decorative throw pillows" },
+            { rank: 12, name: "Stamps" },
+            { rank: 11, name: "Glitter" },
+            { rank: 10, name: "Lawn flamingos" },
+            { rank: 9, name: "Novelty keychains" },
+            { rank: 8, name: "Selfie sticks" },
+            { rank: 7, name: "Decorative soap" },
+            { rank: 6, name: "Pogs" },
+            { rank: 5, name: "Beanie Babies" },
+            { rank: 4, name: "Fidget spinners" },
+            { rank: 3, name: "Pet rocks" },
+            { rank: 2, name: "Celebrity baby name announcements" },
+            { rank: 1, name: "Lint" },
+            { rank: 0, name: "Letters in 'queue' after the first" }
+        ];
+
+        let userItems = [...items];
+        let comparisonMode = false;
+        let draggedElement = null;
+
+        function renderClaudeList() {
+            const claudeList = document.getElementById('claudeList');
+            claudeList.innerHTML = items.map(item => 
+                `<div class="item" data-rank="${item.rank}">
+                    <div class="item-content">
+                        <span class="rank-number">${item.rank}.</span>
+                        ${item.name}
+                    </div>
+                </div>`
+            ).join('');
+        }
+
+        function renderUserList() {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = userItems.map((item, index) => {
+                const userRank = 100 - index;
+                let differenceHTML = '';
+                
+                if (comparisonMode) {
+                    const diff = item.rank - userRank;
+                    const absDiff = Math.abs(diff);
+                    let diffClass = diff > 0 ? 'positive' : (diff < 0 ? 'negative' : 'perfect');
+                    let arrow = diff > 0 ? '↑' : (diff < 0 ? '↓' : '=');
+                    if (diff === 0) arrow = '✓';
+                    differenceHTML = `<div class="difference ${diffClass}">${arrow}${absDiff}</div>`;
+                }
+                
+                const rankDisplay = comparisonMode 
+                    ? `<span class="rank-number">${userRank}.</span>`
+                    : `<input type="number" class="rank-input" value="${userRank}" min="0" max="100" data-index="${index}">`;
+                
+                return `<div class="item" draggable="${!comparisonMode}" data-rank="${item.rank}" data-index="${index}">
+                    <div class="item-content">
+                        ${rankDisplay}
+                        ${item.name}
+                    </div>
+                    ${differenceHTML}
+                </div>`;
+            }).join('');
+            
+            if (!comparisonMode) {
+                attachDragListeners();
+                attachRankInputListeners();
+            }
+        }
+
+        function attachRankInputListeners() {
+            const rankInputs = document.querySelectorAll('.rank-input');
+            
+            rankInputs.forEach(input => {
+                input.addEventListener('change', handleRankChange);
+                input.addEventListener('input', handleRankInput);
+                input.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    input.select();
+                });
+            });
+        }
+
+        function handleRankInput(e) {
+            const value = parseInt(e.target.value);
+            if (value < 0 || value > 100 || isNaN(value)) {
+                e.target.classList.add('invalid');
+            } else {
+                e.target.classList.remove('invalid');
+            }
+        }
+
+        function handleRankChange(e) {
+            const input = e.target;
+            const newRank = parseInt(input.value);
+            const currentIndex = parseInt(input.dataset.index);
+            
+            // Validate input
+            if (isNaN(newRank) || newRank < 0 || newRank > 100) {
+                input.classList.add('invalid');
+                // Revert to current rank
+                const currentRank = 100 - currentIndex;
+                input.value = currentRank;
+                setTimeout(() => input.classList.remove('invalid'), 1000);
+                return;
+            }
+            
+            input.classList.remove('invalid');
+            
+            // Calculate target index (100 - newRank because top is 100)
+            const targetIndex = 100 - newRank;
+            
+            // Don't do anything if it's already in the right position
+            if (targetIndex === currentIndex) return;
+            
+            // Move the item to the new position
+            const [removed] = userItems.splice(currentIndex, 1);
+            userItems.splice(targetIndex, 0, removed);
+            
+            renderUserList();
+        }
+
+        function attachDragListeners() {
+            if (comparisonMode) return;
+            
+            const draggableItems = document.querySelectorAll('#userList .item');
+            
+            draggableItems.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragenter', handleDragEnter);
+                item.addEventListener('dragleave', handleDragLeave);
+            });
+        }
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            document.querySelectorAll('.item').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            if (this !== draggedElement) {
+                this.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            if (draggedElement !== this) {
+                const draggedIndex = parseInt(draggedElement.dataset.index);
+                const targetIndex = parseInt(this.dataset.index);
+                
+                const [removed] = userItems.splice(draggedIndex, 1);
+                userItems.splice(targetIndex, 0, removed);
+                
+                renderUserList();
+            }
+            
+            return false;
+        }
+
+        function calculateScore() {
+            let totalDiff = 0;
+            userItems.forEach((item, index) => {
+                const userRank = 100 - index;
+                const diff = Math.abs(item.rank - userRank);
+                totalDiff += diff;
+            });
+            return totalDiff;
+        }
+
+        function showTopDisagreements() {
+            const disagreements = userItems.map((item, index) => {
+                const userRank = 100 - index;
+                const diff = item.rank - userRank;
+                return {
+                    name: item.name,
+                    userRank: userRank,
+                    claudeRank: item.rank,
+                    diff: diff,
+                    absDiff: Math.abs(diff)
+                };
+            });
+
+            // Sort by absolute difference, descending
+            disagreements.sort((a, b) => b.absDiff - a.absDiff);
+
+            // Take top 10
+            const top10 = disagreements.slice(0, 10);
+
+            const disagreementsList = document.getElementById('disagreementsList');
+            disagreementsList.innerHTML = top10.map((d, i) => `
+                <div class="disagreement-item">
+                    <div>
+                        <div class="name">${i + 1}. ${d.name}</div>
+                    </div>
+                    <div>
+                        <div class="rank-label">Your Rank</div>
+                        <div class="rank-value">${d.userRank}</div>
+                    </div>
+                    <div>
+                        <div class="rank-label">Claude's Rank</div>
+                        <div class="rank-value">${d.claudeRank}</div>
+                    </div>
+                    <div>
+                        <div class="rank-label">Difference</div>
+                        <div class="diff-value">${d.absDiff}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function compareWithClaude() {
+            comparisonMode = true;
+            document.querySelector('.container').classList.add('comparison-mode');
+            const score = calculateScore();
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            scoreDisplay.textContent = `Your Score: ${score} ${score === 0 ? '🎉 Perfect!' : ''}`;
+            scoreDisplay.style.display = 'block';
+            showTopDisagreements();
+            renderClaudeList();
+            renderUserList();
+            document.getElementById('compareBtn').disabled = true;
+        }
+
+        function resetRankings() {
+            comparisonMode = false;
+            document.querySelector('.container').classList.remove('comparison-mode');
+            userItems = [...items];
+            document.getElementById('scoreDisplay').style.display = 'none';
+            document.getElementById('compareBtn').disabled = false;
+            renderUserList();
+        }
+
+        function shuffleItems() {
+            comparisonMode = false;
+            document.querySelector('.container').classList.remove('comparison-mode');
+            userItems = [...items].sort(() => Math.random() - 0.5);
+            document.getElementById('scoreDisplay').style.display = 'none';
+            document.getElementById('compareBtn').disabled = false;
+            renderUserList();
+        }
+
+        document.getElementById('compareBtn').addEventListener('click', compareWithClaude);
+        document.getElementById('resetBtn').addEventListener('click', resetRankings);
+        document.getElementById('shuffleBtn').addEventListener('click', shuffleItems);
+
+        // Initialize with shuffled items
+        userItems = [...items].sort(() => Math.random() - 0.5);
+        renderUserList();
+    </script>
+</body>
+</html>
